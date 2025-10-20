@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 import matplotlib.pyplot as plt
-from control import Controller
+
 from .terrain import generate_reference_and_limits
 
 class Submarine:
@@ -81,7 +81,9 @@ class Mission:
         cave_height = data[:, 1]
         cave_depth = data[:, 2]
         return cls(reference, cave_height, cave_depth)
-        
+
+# Import the Controller class from control module to use later
+from .control import Controller
 
 class ClosedLoop:
     def __init__(self, plant: Submarine, controller: Controller):
@@ -97,13 +99,13 @@ class ClosedLoop:
         positions = np.zeros((T, 2))
         actions = np.zeros(T) #NOTE Pre-allocate actions array as 1D array of zeroes with length T
         self.plant.reset_state() #NOTE Resets the plant state before simulation 
-
+        
         for t in range(T):
             positions[t] = self.plant.get_position() 
             #NOTE get_position() returns (pos_x, pos_y) and the way numpy handles indexing like this stores the tuple into the row t of positions correctly
             observation_t = self.plant.get_depth()
             # Call your controller here
-            actions[t] = self.controller.compute_action(observation_t, t)
+            actions[t] = self.controller.compute_PD_action(observation_t, t)
             self.plant.transition(actions[t], disturbances[t])
 
         return Trajectory(positions)
