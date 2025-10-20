@@ -105,7 +105,7 @@ class ClosedLoop:
             #NOTE get_position() returns (pos_x, pos_y) and the way numpy handles indexing like this stores the tuple into the row t of positions correctly
             observation_t = self.plant.get_depth()
             # Call your controller here
-            actions[t] = self.controller.compute_PD_action(observation_t, t)
+            actions[t] = self.controller.PD_action(observation_t, t) + self.controller.integral_action(positions[:,1], t)
             self.plant.transition(actions[t], disturbances[t])
 
         return Trajectory(positions)
