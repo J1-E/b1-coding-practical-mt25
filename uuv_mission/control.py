@@ -2,6 +2,7 @@
 from .dynamic import Submarine, Mission 
 
 class Controller:
+    # Include control gains in initialisation so that we can tune them when creating the controller
     def __init__(self, submarine: Submarine, mission: Mission, Kp: float, Kd: float):
         self.submarine = submarine
         self.mission = mission
@@ -17,7 +18,7 @@ class Controller:
     def compute_action(self, observation: float, time_step: int) -> float:
         error = self.find_error(observation, time_step)
         
-        #compute derivative using the difference in reference subtracted by the difference in y position which will by y velocity since we always have both contained within this class
+        #compute derivative using the difference in reference subtracted by the difference in y position which will = y velocity since we always have both contained within this class
         if time_step > 0:
             derivative = (self.mission.reference[time_step] - self.mission.reference[time_step - 1]) - self.submarine.vel_y
         else:

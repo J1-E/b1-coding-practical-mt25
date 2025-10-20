@@ -76,8 +76,12 @@ class Mission:
 
     @classmethod
     def from_csv(cls, file_name: str):
-        # You are required to implement this method NOTE to read mission data from a CSV file that isn't a random mission
-        pass 
+        data = np.loadtxt(file_name, delimiter=',', skiprows=2) # skiprows=2 to skip headers
+        reference = data[:, 0]
+        cave_height = data[:, 1]
+        cave_depth = data[:, 2]
+        return cls(reference, cave_height, cave_depth)
+        
 
 class ClosedLoop:
     def __init__(self, plant: Submarine, controller: Controller):
@@ -99,7 +103,7 @@ class ClosedLoop:
             #NOTE get_position() returns (pos_x, pos_y) and the way numpy handles indexing like this stores the tuple into the row t of positions correctly
             observation_t = self.plant.get_depth()
             # Call your controller here
-
+            actions[t] = self.controller.compute_action(observation_t, t)
             self.plant.transition(actions[t], disturbances[t])
 
         return Trajectory(positions)
