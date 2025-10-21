@@ -76,7 +76,7 @@ class Mission:
 
     @classmethod
     def from_csv(cls, file_name: str):
-        data = np.loadtxt(file_name, delimiter=',', skiprows=2) # skiprows=2 to skip headers
+        data = np.loadtxt(file_name, delimiter=',', skiprows=2) # pyright: ignore[reportCallIssue] # skiprows=2 to skip headers
         reference = data[:, 0]
         cave_height = data[:, 1]
         cave_depth = data[:, 2]
