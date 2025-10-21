@@ -12,7 +12,7 @@ class Controller:
         self.Ki = Ki
 
     #Find error in a separate method to keep compute_action cleaner (using observation as input because it makes sense to name it that way within this controller method)
-    def find_error(self, observation: float, time_step: int):
+    def find_error(self, observation: float, time_step: int) -> float:
         reference_depth = self.mission.reference[time_step]
         error = reference_depth - observation
         return error
@@ -28,6 +28,11 @@ class Controller:
         PD_action = self.Kp * error + self.Kd * derivative
         return PD_action
     
-    def integral_action(self, y_positions: np.ndarray, time_step: int) -> float:
+    def integral_action(self, y_positions: np.ndarray, time_step: int) -> float: # Need to feed the position array to the method to integrate error over time
         # TODO Placeholder for integral action if needed in future
-        return 0.0
+        current_error=self.mission.reference[time_step]-y_positions[time_step]
+        for i in range(time_step):
+            previous_error=self.mission.reference[i]-y_positions[i]
+            current_error+=previous_error
+        integral_action=self.Ki*current_error
+        return integral_action
