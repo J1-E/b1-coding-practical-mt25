@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 import matplotlib.pyplot as plt
+
 from .terrain import generate_reference_and_limits
 
 class Submarine:
@@ -23,7 +24,7 @@ class Submarine:
         self.pos_x += self.vel_x * self.dt
         self.pos_y += self.vel_y * self.dt
 
-        force_y = -self.drag * self.vel_y + self.actuator_gain * (action + disturbance)
+        force_y = -self.drag * self.vel_y + self.actuator_gain * (action + disturbance) # NOTE first term is drag, second term is actuator force with actuator gain being 1
         acc_y = force_y / self.mass
         self.vel_y += acc_y * self.dt
 
@@ -70,17 +71,22 @@ class Mission:
 
     @classmethod
     def random_mission(cls, duration: int, scale: float):
-        (reference, cave_height, cave_depth) = generate_reference_and_limits(duration, scale)
-        return cls(reference, cave_height, cave_depth)
+        (reference, cave_height, cave_depth) = generate_reference_and_limits(duration, scale) # NOTE generates random mission data to give us the reference and 
+        return cls(reference, cave_height, cave_depth) 
 
     @classmethod
     def from_csv(cls, file_name: str):
-        # You are required to implement this method
-        pass
+        data = np.loadtxt(file_name, delimiter=',', skiprows=2) # pyright: ignore[reportCallIssue] # skiprows=2 to skip headers
+        reference = data[:, 0]
+        cave_height = data[:, 1]
+        cave_depth = data[:, 2]
+        return cls(reference, cave_height, cave_depth)
 
+# Import the Controller class from control module to use later
+from .control import Controller
 
 class ClosedLoop:
-    def __init__(self, plant: Submarine, controller):
+    def __init__(self, plant: Submarine, controller: Controller):
         self.plant = plant
         self.controller = controller
 
@@ -91,13 +97,15 @@ class ClosedLoop:
             raise ValueError("Disturbances must be at least as long as mission duration")
         
         positions = np.zeros((T, 2))
-        actions = np.zeros(T)
-        self.plant.reset_state()
-
+        actions = np.zeros(T) #NOTE Pre-allocate actions array as 1D array of zeroes with length T
+        self.plant.reset_state() #NOTE Resets the plant state before simulation 
+        
         for t in range(T):
-            positions[t] = self.plant.get_position()
+            positions[t] = self.plant.get_position() 
+            #NOTE get_position() returns (pos_x, pos_y) and the way numpy handles indexing like this stores the tuple into the row t of positions correctly
             observation_t = self.plant.get_depth()
             # Call your controller here
+            actions[t] = self.controller.PD_action(observation_t, t) + self.controller.integral_action(positions[:,1], t)
             self.plant.transition(actions[t], disturbances[t])
 
         return Trajectory(positions)
